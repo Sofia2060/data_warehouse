@@ -1,0 +1,11 @@
+# Thu vien cho 2 container tang ung dung (streamlit, groq-agent) - muc 3.9
+streamlit==1.50.0
+plotly==6.3.0
+pandas==2.2.3
+requests==2.32.4
+trino==0.336.0
+boto3==1.40.0
+groq==0.31.1
+sqlglot==27.8.0
+fastapi==0.116.1
+uvicorn==0.35.0

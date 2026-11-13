@@ -1,0 +1,3 @@
+# Gold gia lap dung cho kiem thu offline (tao bang build_mock_gold.py), khong dua len Git
+*.duckdb
+*.duckdb.wal

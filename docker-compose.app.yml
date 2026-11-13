@@ -1,0 +1,54 @@
+# Lakehouse Online Retail II - 2 container tang ung dung (muc 3.9): groq-agent va streamlit.
+# Dung KEM file docker-compose.yml cua nhom (khong can sua file do):
+#   docker compose -f docker-compose.yml -f docker-compose.app.yml up -d --build
+# Moi duong dan duoi day tinh tu thu muc chua docker-compose.yml.
+
+x-app-env: &app-env
+  TRINO_HOST: trino
+  TRINO_PORT: "8080"
+  MINIO_ENDPOINT: http://minio:9000
+  MINIO_ACCESS_KEY: admin
+  MINIO_SECRET_KEY: password
+  GROQ_API_KEY: ${GROQ_API_KEY:-}                     # khai bao trong file .env (khong dua len Git)
+  GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
+  AGENT_URL: http://groq-agent:8000
+
+services:
+  # ---------------- UNG DUNG ----------------
+  groq-agent:
+    build: ./app
+    image: lakehouse-app:1.0
+    container_name: groq-agent
+    environment: *app-env
+    command: ["uvicorn", "agent.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      trino: {condition: service_started}
+    ports:
+      - "8000:8000"   # API Text-to-SQL (/health, /ask, /docs)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 15s
+      retries: 10
+      start_period: 10s
+    networks: [lakehouse_net]
+
+  streamlit:
+    build: ./app
+    image: lakehouse-app:1.0
+    container_name: streamlit
+    environment: *app-env
+    command: ["streamlit", "run", "dashboard/streamlit_app.py",
+              "--server.port=8501", "--server.address=0.0.0.0",
+              "--server.headless=true", "--browser.gatherUsageStats=false"]
+    depends_on:
+      trino: {condition: service_started}
+      minio: {condition: service_started}
+      groq-agent: {condition: service_healthy}
+    ports:
+      - "8501:8501"   # Dashboard
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health', timeout=3)"]
+      interval: 15s
+      retries: 10
+      start_period: 20s
+    networks: [lakehouse_net]
