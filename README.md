@@ -61,7 +61,7 @@ lakehouse-online-retail/
 | airflow-scheduler | Lập lịch và chạy task của 6 DAG | — |
 | airflow-triggerer | Theo dõi các task deferrable (DAG cha chờ DAG con) | — |
 
-> Đây là 12/14 container. `streamlit` và `groq-agent` được bổ sung ở phần ứng dụng. Với Airflow, hãy cấp cho Docker **ít nhất 8 GB RAM**.
+“Hệ thống có 14 container: 12 container trong docker-compose.yml và 2 container ứng dụng (streamlit, groq-agent) trong docker-compose.app.yml, xem README_UNG_DUNG.md. Với Airflow, hãy cấp cho Docker ít nhất 8 GB RAM.”
 
 ---
 
@@ -217,7 +217,7 @@ Hoặc `Trigger DAG` trên `model_retrain_dag`. Kết quả nằm trong MinIO, b
 | `forecast.csv` | Dự báo 30 ngày: `yhat`, `yhat_lower`, `yhat_upper` (khoảng tin cậy 80%) |
 | `test_predictions.csv`, `test_comparison.png`, `forecast.png` | Dự báo trên tập Test và biểu đồ cho báo cáo |
 
-`models/prophet_revenue/latest.json` chỉ được cập nhật khi mô hình đạt cả 3 tiêu chí nghiệm thu (`ml/config.py`): WAPE của Tuned thấp hơn Baseline, thấp hơn Seasonal naive, và không vượt `ACCEPT_MAX_WAPE`. Ứng dụng Streamlit nạp mô hình bằng `registry.load_model("latest")`.
+`models/prophet_revenue/latest.json` chỉ được cập nhật khi mô hình đạt cả 3 tiêu chí nghiệm thu (`ml/config.py`): WAPE của Tuned thấp hơn Baseline, thấp hơn Seasonal naive, và không vượt `ACCEPT_MAX_WAPE`. Ứng dụng Streamlit đọc forecast.csv và metrics.json của phiên bản ghi trong latest.json.`.
 
 Chạy trên máy host (không cần Docker cho phần Prophet, nhưng cần Trino và MinIO đang chạy):
 
