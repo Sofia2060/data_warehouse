@@ -1,0 +1,4 @@
+trino
+boto3
+prophet
+matplotlib

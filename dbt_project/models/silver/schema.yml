@@ -1,0 +1,32 @@
+version: 2
+models:
+  - name: stg_retail_transactions
+    description: "Du lieu da ep kieu, chuan hoa, khu trung lap, xu ly Customer ID thieu"
+    columns:
+      - name: transaction_id
+        tests: [unique, not_null]
+
+  - name: stg_sales
+    description: "Giao dich ban hang hop le - dau vao cua tang Gold"
+    columns:
+      - name: transaction_id
+        tests: [unique, not_null]
+      - name: customer_id
+        tests: [not_null]
+      - name: price
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+      - name: quantity
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+      - name: invoice
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "not like 'C%'"
+
+  - name: stg_cancellations
+    description: "Dong thuoc don huy"
+  - name: stg_rejected_records
+    description: "Ban ghi loi bi loai, cot reject_reason ghi ly do"

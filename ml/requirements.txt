@@ -1,0 +1,7 @@
+# Chi can khi chay pipeline tren may host (trong Docker, thu vien da co san trong image airflow)
+pandas
+numpy
+prophet
+matplotlib
+trino
+boto3

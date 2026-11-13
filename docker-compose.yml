@@ -1,0 +1,242 @@
+# Lakehouse Online Retail II - phan ha tang cho 3 tang Bronze / Silver / Gold
+# Ten container theo Bang 3.2 (muc 3.2). Day la 12/14 container: 8 container ha tang du lieu
+# + 4 container Airflow (airflow-init, airflow-webserver, airflow-scheduler, airflow-triggerer).
+# 2 container con lai (streamlit, groq-agent) se duoc bo sung o phan Ung dung.
+
+x-aws-env: &aws-env
+  AWS_ACCESS_KEY_ID: admin
+  AWS_SECRET_ACCESS_KEY: password
+  AWS_REGION: us-east-1
+
+# Cau hinh chung cho 4 container Airflow (muc 3.7)
+x-airflow-common: &airflow-common
+  build: ./airflow
+  image: lakehouse-airflow:2.10.5
+  environment: &airflow-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://hive:hive@postgres-db:5432/airflow_db
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"     # bat tung DAG thu cong sau khi he thong len
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: Asia/Ho_Chi_Minh
+    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: Asia/Ho_Chi_Minh
+    AIRFLOW__WEBSERVER__SECRET_KEY: lakehouse-online-retail-secret
+    # Thong tin ket noi cho DAG va pipeline ML (ml/config.py doc cac bien nay)
+    TRINO_HOST: trino
+    TRINO_PORT: "8080"
+    MINIO_ENDPOINT: http://minio:9000
+    MINIO_ACCESS_KEY: admin
+    MINIO_SECRET_KEY: password
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - airflow_logs:/opt/airflow/logs
+    - ./ml:/opt/ml:ro                                       # ma nguon pipeline Prophet (muc 3.8)
+    - /var/run/docker.sock:/var/run/docker.sock             # de DAG goi "docker exec" vao spark-ingest va dbt
+  # Gid cua docker.sock: Docker Desktop = 0 (nhom root, trung nhom mac dinh cua user airflow).
+  # Tren Linux: export DOCKER_GID=$(stat -c %g /var/run/docker.sock) truoc khi "docker compose up".
+  group_add: ["${DOCKER_GID:-0}"]
+  networks: [lakehouse_net]
+
+services:
+  # ---------------- LUU TRU & METADATA ----------------
+  postgres-db:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive
+      POSTGRES_DB: metastore_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive -d metastore_db"]
+      interval: 5s
+      retries: 20
+    networks: [lakehouse_net]
+
+  minio:
+    # MinIO da go image khoi Docker Hub (09/2026) -> dung ban fork tuong thich cua PGSTY
+    image: pgsty/silo:RELEASE.2026-10-15T00-00-00Z
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # MinIO Console
+    volumes:
+      - minio_data:/data
+    networks: [lakehouse_net]
+
+  create-minio-bucket:
+    # Tao bucket "warehouse" bang AWS CLI (giao thuc S3), chay 1 lan roi dung
+    image: amazon/aws-cli:2.22.35
+    container_name: create-minio-bucket
+    depends_on: [minio]
+    environment:
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until aws --endpoint-url http://minio:9000 s3 ls > /dev/null 2>&1; do
+          echo "Dang cho MinIO khoi dong..."; sleep 3;
+        done
+        aws --endpoint-url http://minio:9000 s3 mb s3://warehouse 2>/dev/null || echo "Bucket da ton tai"
+        echo "Da tao bucket warehouse"
+    networks: [lakehouse_net]
+
+  hive-metastore:
+    build: ./hive
+    container_name: hive-metastore
+    depends_on:
+      postgres-db: {condition: service_healthy}
+      create-minio-bucket: {condition: service_completed_successfully}
+    environment:
+      SERVICE_NAME: metastore
+      DB_DRIVER: postgres
+      HIVE_CUSTOM_CONF_DIR: /hive_custom_conf
+      # Lan chay DAU TIEN tren may moi: de "false" de khoi tao schema metastore.
+      # Tu lan khoi dong thu hai tro di: doi thanh "true" (xem README, muc Loi thuong gap)
+      IS_RESUME: "false"
+    volumes:
+      - ./hive/conf:/hive_custom_conf:ro
+    ports:
+      - "9083:9083"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/9083' || exit 1"]
+      interval: 10s
+      retries: 30
+      start_period: 30s
+    networks: [lakehouse_net]
+
+  # ---------------- XU LY ----------------
+  spark-ingest:
+    build: ./spark
+    container_name: spark-ingest
+    depends_on:
+      hive-metastore: {condition: service_healthy}
+    environment: *aws-env
+    entrypoint: ["tail", "-f", "/dev/null"]     # cho lenh spark-submit (Airflow / thu cong)
+    volumes:
+      - ./data:/opt/data
+      - ./ingest:/opt/ingest
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+    ports:
+      - "4040:4040"   # Spark UI khi job dang chay
+    networks: [lakehouse_net]
+
+  spark-thrift-server:
+    build: ./spark
+    container_name: spark-thrift-server
+    depends_on:
+      hive-metastore: {condition: service_healthy}
+    environment:
+      <<: *aws-env
+      SPARK_NO_DAEMONIZE: "true"
+    entrypoint: ["/opt/spark/sbin/start-thriftserver.sh",
+                 "--master", "local[2]", "--driver-memory", "2g",
+                 "--hiveconf", "hive.server2.thrift.port=10000"]
+    volumes:
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+    ports:
+      - "10000:10000"
+      - "4041:4040"   # Spark UI cua thrift server
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/10000' || exit 1"]
+      interval: 10s
+      retries: 30
+      start_period: 40s
+    networks: [lakehouse_net]
+
+  dbt:
+    build: ./dbt
+    container_name: dbt
+    depends_on:
+      spark-thrift-server: {condition: service_healthy}
+    working_dir: /usr/app
+    environment:
+      DBT_PROFILES_DIR: /usr/app
+      DBT_LOG_PATH: /tmp/dbt_logs
+      DBT_TARGET_PATH: /tmp/dbt_target
+      # Thu muc cai dbt_packages dat trong dbt_project.yml (packages-install-path); dbt khong doc bien moi truong
+    volumes:
+      - ./dbt_project:/usr/app
+    entrypoint: ["tail", "-f", "/dev/null"]
+    ports:
+      - "8081:8081"   # dbt docs serve (Data Lineage)
+    networks: [lakehouse_net]
+
+  # ---------------- TRUY VAN ----------------
+  trino:
+    image: trinodb/trino:470
+    container_name: trino
+    depends_on:
+      hive-metastore: {condition: service_healthy}
+    volumes:
+      - ./trino/catalog/iceberg.properties:/etc/trino/catalog/iceberg.properties:ro
+    ports:
+      - "8090:8080"   # Trino UI (8080 de danh cho airflow-webserver)
+    networks: [lakehouse_net]
+
+  # ---------------- DIEU PHOI (Apache Airflow) ----------------
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow-init
+    depends_on:
+      postgres-db: {condition: service_healthy}
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        python - <<'PY'
+        import psycopg2
+        conn = psycopg2.connect(host="postgres-db", user="hive", password="hive", dbname="metastore_db")
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM pg_database WHERE datname = 'airflow_db'")
+        if cur.fetchone() is None:
+            cur.execute("CREATE DATABASE airflow_db")
+            print("Da tao database airflow_db")
+        PY
+        airflow db migrate
+        airflow users create --username admin --password admin \
+          --firstname Admin --lastname User --role Admin --email admin@example.com || true
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow-webserver
+    command: webserver
+    depends_on:
+      airflow-init: {condition: service_completed_successfully}
+    ports:
+      - "8080:8080"   # Airflow UI (admin / admin)
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 15s
+      retries: 10
+      start_period: 30s
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow-scheduler
+    command: scheduler
+    depends_on:
+      airflow-init: {condition: service_completed_successfully}
+
+  airflow-triggerer:
+    <<: *airflow-common
+    container_name: airflow-triggerer
+    command: triggerer
+    depends_on:
+      airflow-init: {condition: service_completed_successfully}
+
+volumes:
+  pg_data:
+  minio_data:
+  airflow_logs:
+
+networks:
+  lakehouse_net:
+

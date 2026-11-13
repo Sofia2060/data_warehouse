@@ -1,0 +1,341 @@
+{
+  "model_name": "prophet_revenue",
+  "version": "20261030T094324",
+  "trained_at": "2026-10-30T09:44:00+00:00",
+  "duration_seconds": 31.1,
+  "mode": "full",
+  "data": {
+    "source": "iceberg.gold.wide_daily_sales",
+    "rows": 739,
+    "start": "2009-12-01T00:00:00",
+    "end": "2011-12-09T00:00:00",
+    "trading_days": 604,
+    "train_rows": 591,
+    "train_end": "2011-07-14T00:00:00",
+    "test_rows": 148,
+    "test_start": "2011-07-15T00:00:00",
+    "split": "80/20 theo thoi gian"
+  },
+  "baseline_prophet": {
+    "mae": 20597.413299844982,
+    "rmse": 30901.033237729327,
+    "mape_trading_days": 0.47319840160570575,
+    "smape": 0.5809307623788694,
+    "wape": 0.5530001603985414
+  },
+  "seasonal_naive": {
+    "mae": 18952.53879054054,
+    "rmse": 28631.177494802792,
+    "mape_trading_days": 0.44713460887703294,
+    "smape": 0.5359993270723724,
+    "wape": 0.5088385050372988
+  },
+  "tuned_prophet": {
+    "mae": 11985.738321092684,
+    "rmse": 20435.52287407401,
+    "mape_trading_days": 0.29476197618156147,
+    "smape": 0.4280065706764882,
+    "wape": 0.32179357269629005
+  },
+  "best_params": {
+    "changepoint_prior_scale": 0.01,
+    "seasonality_prior_scale": 10.0,
+    "seasonality_mode": "additive",
+    "yearly_seasonality": true
+  },
+  "best_cv_wape": 0.38346677395349643,
+  "grid_results": [
+    {
+      "params": {
+        "changepoint_prior_scale": 0.01,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.38346677395349643,
+      "cv_rmse": 15924.366068942045,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.01,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.3837124811993912,
+      "cv_rmse": 15922.384749536786,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.05,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.39872996314223286,
+      "cv_rmse": 16222.67127039659,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.05,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.39924175988081195,
+      "cv_rmse": 16232.782142047985,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.01,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.418691295946699,
+      "cv_rmse": 15791.450643016078,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.01,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.4198867416145121,
+      "cv_rmse": 15872.330572624564,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.05,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.47302147498440095,
+      "cv_rmse": 18868.56146723179,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.05,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.47438307629304255,
+      "cv_rmse": 18901.2754902392,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.05,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.477246861596782,
+      "cv_rmse": 18095.477751514187,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.05,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.4794854626349547,
+      "cv_rmse": 18182.804926493183,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.01,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.480530051525298,
+      "cv_rmse": 17719.904618065713,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.01,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.48249271929130605,
+      "cv_rmse": 17807.605352507882,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.01,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.48449025005087054,
+      "cv_rmse": 17303.33362945005,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.05,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.4863580738543346,
+      "cv_rmse": 18486.34319962322,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.01,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.48677602992713914,
+      "cv_rmse": 17400.766231250363,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.05,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.4887089514265349,
+      "cv_rmse": 18610.469722478036,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.5,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.5093060349045156,
+      "cv_rmse": 18711.171468183195,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.5,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.5103399798285868,
+      "cv_rmse": 18687.16701990442,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.5,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.5142983620616112,
+      "cv_rmse": 19436.98434850012,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.5,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": false
+      },
+      "cv_wape": 0.5162164719292722,
+      "cv_rmse": 19581.64661669144,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.5,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.5458487940869615,
+      "cv_rmse": 23159.49303492498,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.5,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "additive",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.5479595133329606,
+      "cv_rmse": 23254.684836696397,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.5,
+        "seasonality_prior_scale": 1.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.5889871834906545,
+      "cv_rmse": 22971.485849164103,
+      "cv_folds": 9
+    },
+    {
+      "params": {
+        "changepoint_prior_scale": 0.5,
+        "seasonality_prior_scale": 10.0,
+        "seasonality_mode": "multiplicative",
+        "yearly_seasonality": true
+      },
+      "cv_wape": 0.5952433531903208,
+      "cv_rmse": 23248.31665602211,
+      "cv_folds": 9
+    }
+  ],
+  "improvement_vs_baseline": {
+    "wape_pct": 41.809497403332244,
+    "rmse_pct": 33.86783310170099,
+    "mae_pct": 41.809497403332244
+  },
+  "acceptance": {
+    "max_wape": 0.4,
+    "checks": {
+      "tuned_beats_baseline_wape": true,
+      "tuned_beats_seasonal_naive_wape": true,
+      "tuned_wape_within_limit": true
+    },
+    "passed": true
+  },
+  "forecast": {
+    "horizon_days": 30,
+    "interval_width": 0.8,
+    "start": "2011-12-10T00:00:00",
+    "end": "2012-01-08T00:00:00",
+    "total_yhat": 654419.5164919109,
+    "total_lower": 262802.2275179025,
+    "total_upper": 1122492.2584754976
+  },
+  "final_model_trained_on": "train+test (toan bo du lieu)",
+  "notes": [
+    "yearly_seasonality duoc uoc luong tu 591 ngay (< 2 nam) nen mua vu nam chi dua tren mot chu ky - ket qua phu thuoc nhieu vao mua cao diem cuoi nam"
+  ],
+  "promoted": true
+}

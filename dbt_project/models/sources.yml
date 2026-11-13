@@ -1,0 +1,8 @@
+version: 2
+sources:
+  - name: bronze
+    schema: bronze
+    description: "Du lieu tho nap tu online_retail_II.xlsx bang Spark (ingest_bronze.py)"
+    tables:
+      - name: online_retail
+        description: "Hop nhat 2 sheet, giu nguyen du lieu goc + cot _source_sheet, _source_row, _ingested_at"

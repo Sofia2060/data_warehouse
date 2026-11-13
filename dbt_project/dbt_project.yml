@@ -1,0 +1,20 @@
+name: online_retail
+version: "1.0.0"
+config-version: 2
+profile: online_retail
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+target-path: "target"
+packages-install-path: "/tmp/dbt_packages"   # thu muc mount tu o Windows khong ghi duoc -> cai goi vao /tmp cua container
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  online_retail:
+    +file_format: "{{ var('file_format', 'iceberg') }}"   # moi bang luu dang Apache Iceberg
+    silver:
+      +schema: silver
+      +materialized: table
+    gold:
+      +schema: gold
+      +materialized: table

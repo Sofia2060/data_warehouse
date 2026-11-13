@@ -1,0 +1,48 @@
+version: 2
+models:
+  - name: dim_customers
+    columns:
+      - name: customer_key
+        tests: [unique, not_null]
+  - name: dim_products
+    columns:
+      - name: product_key
+        tests: [unique, not_null]
+  - name: dim_date
+    columns:
+      - name: date_key
+        tests: [unique, not_null]
+  - name: dim_country
+    columns:
+      - name: country_key
+        tests: [unique, not_null]
+
+  - name: fact_sales
+    tests:
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('stg_sales')
+    columns:
+      - name: sales_key
+        tests: [unique, not_null]
+      - name: date_key
+        tests:
+          - relationships: {to: ref('dim_date'), field: date_key}
+      - name: customer_key
+        tests:
+          - relationships: {to: ref('dim_customers'), field: customer_key}
+      - name: product_key
+        tests:
+          - relationships: {to: ref('dim_products'), field: product_key}
+      - name: country_key
+        tests:
+          - relationships: {to: ref('dim_country'), field: country_key}
+
+  - name: wide_daily_sales
+    tests:
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('dim_date')
+    columns:
+      - name: sale_date
+        tests: [unique, not_null]
+      - name: total_revenue
+        tests: [not_null]

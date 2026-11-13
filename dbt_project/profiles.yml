@@ -1,0 +1,12 @@
+online_retail:
+  target: dev
+  outputs:
+    dev:
+      type: spark
+      method: thrift                 # ket noi Spark Thrift Server
+      host: spark-thrift-server
+      port: 10000
+      schema: silver                 # schema mac dinh
+      threads: 2
+      connect_retries: 5
+      connect_timeout: 60
